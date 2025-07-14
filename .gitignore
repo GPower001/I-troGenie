@@ -1,0 +1,86 @@
+# General
+.DS_Store
+*.swp
+*.swo
+*~
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+._*
+
+# Logs and databases
+*.log
+*.sql
+*.sqlite
+
+# Dependency directories
+node_modules/
+bower_components/
+vendor/
+.venv/
+venv/
+ENV/
+
+# Build and distribution
+dist/
+build/
+out/
+*.exe
+*.dll
+*.so
+*.o
+*.a
+*.pyc
+__pycache__/
+*.class
+bin/
+obj/
+*.egg-info/
+*.egg
+*.jar
+*.war
+*.ear
+
+# IDE specific files
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.venv
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+[Tt]humbs.db
+*.stackdump
+
+# Linux
+*~
+
+# Test coverage
+coverage/
+*.lcov
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local development files
+*.local
+*.bak
+*.backup
+*.tmp
