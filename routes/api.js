@@ -131,101 +131,115 @@
 // export default router; 
 
 // routes/api.js
+// import { Router } from 'express';
+// import axios from 'axios';
+// import { getSymptoms, fetchAllSymptoms } from '../utils/symptomsFetcher.js';
+
+// const router = Router();
+// const FLASK_API_URL = process.env.FLASK_API_URL || 'http://192.168.0.2:5000';
+
+// router.post('/predict', async (req, res) => {
+//     try {
+//         const userSymptoms = req.body.symptoms;
+        
+//         if (!userSymptoms || !Array.isArray(userSymptoms)) {
+//             return res.status(400).json({ 
+//                 error: 'Invalid or missing symptoms array' 
+//             });
+//         }
+
+//         // Get symptoms list
+//         let symptomsList = getSymptoms();
+//         if (symptomsList.length === 0) {
+//             await fetchAllSymptoms();
+//             symptomsList = getSymptoms();
+//             if (symptomsList.length === 0) {
+//                 return res.status(503).json({ 
+//                     error: 'Symptom data not available' 
+//                 });
+//             }
+//         }
+
+//         // Prepare payload for prediction
+//         const symptomsPayload = symptomsList.reduce((acc, symptom) => {
+//             acc[symptom] = 0;
+//             return acc;
+//         }, {});
+
+//         const unknownSymptoms = [];
+//         userSymptoms.forEach(symptom => {
+//             const cleaned = symptom.trim().toLowerCase();
+//             if (symptomsList.includes(cleaned)) {
+//                 symptomsPayload[cleaned] = 1;
+//             } else {
+//                 unknownSymptoms.push(symptom);
+//             }
+//         });
+
+//         // Get prediction from Flask API
+//         const predictionRes = await axios.post(`${FLASK_API_URL}/predict`, {
+//             symptoms: symptomsPayload
+//         }, { timeout: 10000 });
+
+//         const predictedDisease = predictionRes.data.predicted_disease;
+//         if (!predictedDisease) {
+//             throw new Error('No disease prediction returned');
+//         }
+
+//         // Get recommendations from Flask API
+//         const recommendationsRes = await axios.post(`${FLASK_API_URL}/recommendations`, {
+//             disease: predictedDisease
+//         }, { timeout: 10000 });
+
+//         // Combine results
+//         const response = {
+//             predicted_disease: predictedDisease,
+//             recommendations: recommendationsRes.data,
+//             ...(unknownSymptoms.length > 0 && {
+//                 warnings: {
+//                     unknown_symptoms: unknownSymptoms
+//                 }
+//             })
+//         };
+
+//         res.json(response);
+
+//     } catch (error) {
+//         console.error('Prediction error:', error.message);
+//         if (error.response) {
+//             res.status(error.response.status).json(error.response.data);
+//         } else {
+//             res.status(500).json({ 
+//                 error: 'Prediction service error',
+//                 details: error.message 
+//             });
+//         }
+//     }
+// });
+
+// // Keep your existing symptoms endpoint
+// router.get('/symptoms', (req, res) => {
+//     const symptoms = getSymptoms();
+//     if (symptoms.length === 0) {
+//         return res.status(503).json({ 
+//             error: 'Symptom list not available' 
+//         });
+//     }
+//     res.json({ symptoms });
+// });
+
+// export default router;
+
+
+
 import { Router } from 'express';
-import axios from 'axios';
-import { getSymptoms, fetchAllSymptoms } from '../utils/symptomsFetcher.js';
+import predictionController from '../controllers/prediction.controller.js';
+import authMiddleware from '../middlewares/authmiddleware.js';
 
 const router = Router();
-const FLASK_API_URL = process.env.FLASK_API_URL || 'http://192.168.0.2:5000';
 
-router.post('/predict', async (req, res) => {
-    try {
-        const userSymptoms = req.body.symptoms;
-        
-        if (!userSymptoms || !Array.isArray(userSymptoms)) {
-            return res.status(400).json({ 
-                error: 'Invalid or missing symptoms array' 
-            });
-        }
-
-        // Get symptoms list
-        let symptomsList = getSymptoms();
-        if (symptomsList.length === 0) {
-            await fetchAllSymptoms();
-            symptomsList = getSymptoms();
-            if (symptomsList.length === 0) {
-                return res.status(503).json({ 
-                    error: 'Symptom data not available' 
-                });
-            }
-        }
-
-        // Prepare payload for prediction
-        const symptomsPayload = symptomsList.reduce((acc, symptom) => {
-            acc[symptom] = 0;
-            return acc;
-        }, {});
-
-        const unknownSymptoms = [];
-        userSymptoms.forEach(symptom => {
-            const cleaned = symptom.trim().toLowerCase();
-            if (symptomsList.includes(cleaned)) {
-                symptomsPayload[cleaned] = 1;
-            } else {
-                unknownSymptoms.push(symptom);
-            }
-        });
-
-        // Get prediction from Flask API
-        const predictionRes = await axios.post(`${FLASK_API_URL}/predict`, {
-            symptoms: symptomsPayload
-        }, { timeout: 10000 });
-
-        const predictedDisease = predictionRes.data.predicted_disease;
-        if (!predictedDisease) {
-            throw new Error('No disease prediction returned');
-        }
-
-        // Get recommendations from Flask API
-        const recommendationsRes = await axios.post(`${FLASK_API_URL}/recommendations`, {
-            disease: predictedDisease
-        }, { timeout: 10000 });
-
-        // Combine results
-        const response = {
-            predicted_disease: predictedDisease,
-            recommendations: recommendationsRes.data,
-            ...(unknownSymptoms.length > 0 && {
-                warnings: {
-                    unknown_symptoms: unknownSymptoms
-                }
-            })
-        };
-
-        res.json(response);
-
-    } catch (error) {
-        console.error('Prediction error:', error.message);
-        if (error.response) {
-            res.status(error.response.status).json(error.response.data);
-        } else {
-            res.status(500).json({ 
-                error: 'Prediction service error',
-                details: error.message 
-            });
-        }
-    }
-});
-
-// Keep your existing symptoms endpoint
-router.get('/symptoms', (req, res) => {
-    const symptoms = getSymptoms();
-    if (symptoms.length === 0) {
-        return res.status(503).json({ 
-            error: 'Symptom list not available' 
-        });
-    }
-    res.json({ symptoms });
-});
+router.post('/predict', authMiddleware, predictionController.predict);
+router.get('/history', authMiddleware, predictionController.getHistory);
+router.get('/symptoms', predictionController.getSymptoms);
 
 export default router;
